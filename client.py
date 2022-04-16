@@ -37,7 +37,7 @@ def mkpkg(s):
     print("What folders/files are included?")
     while True:
         inpt = input()
-        if inpt == '\r':
+        if inpt == '':
             break
         dirs.append(inpt)
 
