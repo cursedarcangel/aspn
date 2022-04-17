@@ -5,20 +5,47 @@ import json
 with open('.pkgs', 'r') as f:
     port = json.loads(f.read())["port"]
 
-def dlpkg(pkg, conn):
-    if os.path.exists(pkg):
-        size = os.path.getsize(pkg)
-        with open(pkg, "rb") as f:
+def dlfil(fil, conn):
+    if os.path.exists(fil):
+        conn.sendall(os.path.basename(fil).encode())
+        with open(fil, "rb") as f:
             while True:
                 bytesRead = f.read(4096)
                 if not bytesRead:
                     break
                 conn.sendall(bytesRead)
         conn.sendall(b"!!DONE!!")
-        return
+        return True
     else:
         conn.sendall(b"!!FILENOTFOUND!!")
-        return
+        conn.sendall(os.path.basename(fil).encode())
+        print(fil)
+        return False
+
+def dlpkg(pkg, conn):
+    files = []
+    with open('.pkgs', 'r') as f:
+        pkgs = json.loads(f.read())['pkgs']
+ 
+    for k, v in pkgs.items():
+        if pkg.casefold() == k.casefold():
+            files = v
+            break
+        else:
+            conn.sendall(b"!!PKGNOTFOUND!!")
+    
+    for f in files:
+        if os.path.isdir(f):
+            print('is a dir')
+            pass
+        else:
+            print(f)
+            if dlfil(f, conn):
+                continue
+                print(f"{f} transferred")
+            else:
+                continue
+    conn.sendall(b"!!PKGDONE!!")
 
 def mkpkg(info):
     pkginfo = json.loads(info)
@@ -30,7 +57,6 @@ def mkpkg(info):
         f.truncate()
 
 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-    print(port)
     s.bind(('0.0.0.0', port))
     print('Server started')
     while True:

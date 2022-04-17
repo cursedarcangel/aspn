@@ -9,27 +9,39 @@ with open('config.json', 'r') as f:
 
 def dlpkg(s):
     pkg = input("What package do you want to copy?\n")
-    output = input("Where should it be output to?\n")
 
     s.sendall(pkg.encode())
     start = time.time()
     fsize = 0
-    with open(output, 'wb') as f:
-        while True:
-            received = s.recv(4096)
-            fsize += 4
-            if received.decode("utf-8", "ignore")[-8:] == "!!DONE!!":
-                break
-            elif received.decode("utf-8", "ignore")[-16:] == "!!FILENOTFOUND!!":
-                print("That package doesn't exist. Please try again.")
-                os.remove(output)
-                quit()
-            f.write(received)
-        print("Elapsed time:", round(time.time() - start, 2), "s")
-        if fsize > 1024:
-            print("Total package size:", round(fsize / 1024, 2), "MB")
-        else:
-            print("Total package size,", fsize, "KB")
+    if not os.path.exists(pkg):
+        os.mkdir(pkg)
+    while True:
+        currentFile = s.recv(4096).decode("utf-8", 'ignore')
+        print(currentFile)
+        with open(f"{pkg}/{currentFile}", 'wb') as f:
+            while True:
+                received = s.recv(4096)
+                fsize += 4
+                if received.decode("utf-8", "ignore")[-8:] == "!!DONE!!":
+                    print(f"{pkg}/{currentFile} transferred")
+                    break
+                elif received.decode("utf-8", "ignore")[-15:] == "!!PKGNOTFOUND!!":
+                    print("That package doesn't exist. Please try again.")
+                    os.remove(pkg)
+                    quit()
+                elif received.decode("utf-8", "ignore")[-16:] == "!!FILENOTFOUND!!":
+                    print('e')
+                    notFound = s.recv(4096).decode()
+                    print(f"File {notFound} not found")
+                    quit()
+                elif received.decode("utf-8", "ignore")[-11:] == "!!PKGDONE!!":
+                    print("Elapsed time:", round(time.time() - start, 2), "s")
+                    if fsize > 1024:
+                        print("Total package size:", round(fsize / 1024, 2), "MB")
+                    else:
+                        print("Total package size,", fsize, "KB")
+                    quit()
+                f.write(received)
 
 def mkpkg(s):
     pkgname = input("What is the package name?\n")
