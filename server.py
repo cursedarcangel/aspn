@@ -56,6 +56,14 @@ def mkpkg(info):
         json.dump(data, f, indent=4)
         f.truncate()
 
+def lspkg(conn):
+    pks = []
+    with open('.pkgs', 'r') as f:
+        pkgs = json.loads(f.read())['pkgs']
+    for k, v in pkgs.items():
+        pks.append([k, len(v)])
+    conn.sendall(json.dumps(pks).encode())
+
 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
     s.bind(('0.0.0.0', port))
     print('Server started')
@@ -71,3 +79,6 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                     mkpkg(conn.recv(4096).decode())
                 elif rq[-9:] == '!!dlpkg!!':
                     dlpkg(conn.recv(4096).decode(), conn)
+                    elif rq[-9:] == '!!lspkg!!':
+                        lspkg(conn)
+

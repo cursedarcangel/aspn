@@ -56,7 +56,9 @@ def mkpkg(s):
     s.sendall(json.dumps((pkgname, dirs)).encode())
 
 def lspkg(s):
-    pass
+    pkgs = json.loads(s.recv(4096).decode())
+    for pk in pkgs:
+        print(f"{pk[0]}: {pk[1]} files")
 
 if len(sys.argv) < 2:
     print("Please input a mode")
@@ -77,3 +79,4 @@ elif sys.argv[1] == 'list':
         s.connect((configs["server_address"], configs["port"]))
         s.sendall('!!lspkg!!'.encode())
         lspkg(s)
+
